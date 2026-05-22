@@ -203,29 +203,29 @@
 
         /* Trash Zone */
         .trash-zone {
-            margin-top: 2rem;
-            background: rgba(239, 68, 68, 0.1);
-            border: 2px dashed rgba(239, 68, 68, 0.4);
-            border-radius: 12px;
-            padding: 1.5rem;
-            text-align: center;
-            color: var(--danger);
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: center;
+            display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
-
+        .trash-zone:hover {
+            background: var(--danger-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
         .trash-zone.drag-over {
             background: rgba(239, 68, 68, 0.2);
             border-color: var(--danger);
             transform: scale(1.02);
-        }
-
-        .trash-icon {
-            font-size: 1.5rem;
         }
 
         /* Modal */
@@ -331,9 +331,10 @@
     </datalist>
 
     <header>
-        <h1>待辦事項</h1>
-        <button class="btn" id="addBtn">+ 新增任務</button>
-    </header>
+    <h1>待辦事項</h1>
+    <button class="btn" id="addBtn">+ 新增任務</button>
+    <div class="trash-zone" id="trash-zone"><span class="trash-icon">🗑️</span> 垃圾桶</div>
+</header>
 
     <div class="board">
         <div class="column" data-column="todo">
@@ -359,9 +360,7 @@
         </div>
     </div>
 
-    <div class="trash-zone" id="trash-zone">
-        <span class="trash-icon">🗑️</span> 垃圾桶
-    </div>
+<!-- Trash zone moved to header -->
 
     <!-- Add Task Modal -->
     <div class="modal-overlay" id="addModal">
