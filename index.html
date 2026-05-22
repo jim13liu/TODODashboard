@@ -333,6 +333,9 @@
     <header>
     <h1>待辦事項</h1>
     <button class="btn" id="addBtn"><span class="plus-icon">➕</span> 新增任務</button>
+    <button class="btn" id="exportBtn">匯出</button>
+    <input type="file" id="importFile" accept=".json" style="display:none;" />
+    <button class="btn" id="importBtn">匯入</button>
     <div class="trash-zone" id="trash-zone"><span class="trash-icon">🗑️</span> 垃&nbsp圾&nbsp桶</div>
 </header>
 
@@ -428,21 +431,35 @@
 
         const trashZone = document.getElementById('trash-zone');
         const columns = document.querySelectorAll('.column');
+        const exportBtn = document.getElementById('exportBtn');
+        const importBtn = document.getElementById('importBtn');
+        const importFile = document.getElementById('importFile');
 
-        // Fetch data on load
-        async function loadData() {
-            try {
-                const res = await fetch('/api/data');
-                if (res.ok) {
-                    boardData = await res.json();
-                    renderAll();
+        // Load data from localStorage on load
+        function loadData() {
+            const data = localStorage.getItem('todoBoardData');
+            if (data) {
+                try {
+                    boardData = JSON.parse(data);
+                } catch (e) {
+                    console.error('Failed to parse stored data:', e);
+                    boardData = { todo: [], inProgress: [], done: [] };
                 }
-            } catch (err) {
-                console.error('Failed to load data:', err);
+            } else {
+                boardData = { todo: [], inProgress: [], done: [] };
             }
+            renderAll();
         }
 
-        // Column Color Listeners
+        // Save data to localStorage
+        function saveData() {
+            try {
+                const json = JSON.stringify(boardData);
+                localStorage.setItem('todoBoardData', json);
+            } catch (e) {
+                console.error('Failed to save data to localStorage:', e);
+            }
+        }
         document.querySelectorAll('.col-color').forEach(picker => {
             picker.addEventListener('change', (e) => {
                 const colId = e.target.dataset.colId;
@@ -463,18 +480,7 @@
             });
         });
 
-        // Save data to server
-        async function saveData() {
-            try {
-                await fetch('/api/data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(boardData)
-                });
-            } catch (err) {
-                console.error('Failed to save data:', err);
-            }
-        }
+        
 
         // Render the board
         function renderAll() {
@@ -754,6 +760,42 @@
                 deleteModal.classList.remove('active');
                 taskToDelete = null;
             }
+        });
+
+        // Export data as JSON file
+        exportBtn.addEventListener('click', () => {
+            console.log('Export button clicked');
+            const dataStr = JSON.stringify(boardData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'todo-data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Import data from JSON file
+        importBtn.addEventListener('click', () => {
+            importFile.click();
+        });
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    if (imported && typeof imported === 'object') {
+                        boardData = imported;
+                        renderAll();
+                        saveData();
+                    }
+                } catch (err) {
+                    console.error('Failed to import data:', err);
+                }
+            };
+            reader.readAsText(file);
         });
 
         // Init
