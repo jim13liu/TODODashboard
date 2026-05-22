@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODO Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --column-bg: rgba(30, 41, 59, 0.7);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-main: #f8fafc;
+            --text-card: #0f172a;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .board {
+            display: flex;
+            gap: 1.5rem;
+            flex: 1;
+            align-items: stretch;
+        }
+
+        .column {
+            flex: 1;
+            background: var(--column-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background 0.3s ease;
+        }
+
+        .column.drag-over {
+            background: rgba(45, 60, 85, 0.8);
+            border-color: var(--primary);
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .task-list {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 150px;
+        }
+
+        .task {
+            background: var(--card-bg);
+            color: var(--text-card);
+            padding: 1rem;
+            border-radius: 10px;
+            cursor: grab;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            font-weight: 500;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            user-select: none;
+            position: relative;
+            word-break: break-word;
+        }
+
+        .task:active {
+            cursor: grabbing;
+        }
+
+        .task.dragging {
+            opacity: 0.5;
+            transform: scale(1.05);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Color Picker */
+        .color-picker {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            outline: none;
+            background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); /* 扇形一圈的漸層 */
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .color-picker:hover {
+            transform: scale(1.1);
+        }
+        .color-picker::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .color-picker::-webkit-color-swatch {
+            border: none;
+            opacity: 0; /* 隱藏原生選色區塊，呈現實心圖示 */
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .task-text {
+            flex: 1;
+            margin-right: 0.5rem;
+            word-break: break-word;
+        }
+
+        .task-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .edit-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            opacity: 0.6;
+            transition: opacity 0.2s, transform 0.2s;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .edit-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* Trash Zone */
+        .trash-zone {
+            margin-top: 2rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px dashed rgba(239, 68, 68, 0.4);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--danger);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .trash-zone.drag-over {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+            transform: scale(1.02);
+        }
+
+        .trash-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: #1e293b;
+            padding: 2rem;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal h2 {
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .modal p {
+            color: #cbd5e1;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(15, 23, 42, 0.5);
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            outline: none;
+        }
+
+        .modal input:focus {
+            border-color: var(--primary);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            color: #cbd5e1;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover);
+        }
+
+    </style>
+</head>
+<body>
+
+    <datalist id="presetColors">
+        <option>#1e293b</option>
+        <option>#ffffff</option>
+        <option>#fca5a5</option>
+        <option>#fdba74</option>
+        <option>#fde047</option>
+        <option>#86efac</option>
+        <option>#67e8f9</option>
+        <option>#93c5fd</option>
+        <option>#c4b5fd</option>
+        <option>#f9a8d4</option>
+    </datalist>
+
+    <header>
+        <h1>待辦事項</h1>
+        <button class="btn" id="addBtn">+ 新增任務</button>
+    </header>
+
+    <div class="board">
+        <div class="column" data-column="todo">
+            <div class="column-header">
+                <span>待處理 (To Do)</span>
+                <input type="color" list="presetColors" class="color-picker col-color" id="color-todo" data-col-id="todo" value="#1e293b">
+            </div>
+            <div class="task-list" id="todo-list"></div>
+        </div>
+        <div class="column" data-column="inProgress">
+            <div class="column-header">
+                <span>處理中 (In Progress)</span>
+                <input type="color" list="presetColors" class="color-picker col-color" id="color-inProgress" data-col-id="inProgress" value="#1e293b">
+            </div>
+            <div class="task-list" id="inProgress-list"></div>
+        </div>
+        <div class="column" data-column="done">
+            <div class="column-header">
+                <span>已完成 (Done)</span>
+                <input type="color" list="presetColors" class="color-picker col-color" id="color-done" data-col-id="done" value="#1e293b">
+            </div>
+            <div class="task-list" id="done-list"></div>
+        </div>
+    </div>
+
+    <div class="trash-zone" id="trash-zone">
+        <span class="trash-icon">🗑️</span> 垃圾桶
+    </div>
+
+    <!-- Add Task Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <h2>新增任務</h2>
+            <input type="text" id="newTaskInput" placeholder="請輸入任務內容..." autocomplete="off">
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelAddBtn">取消</button>
+                <button class="btn" id="confirmAddBtn">新增</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h2>編輯任務</h2>
+            <input type="text" id="editTaskInput" placeholder="請輸入任務內容..." autocomplete="off">
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelEditBtn">取消</button>
+                <button class="btn" id="confirmEditBtn">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <h2>確認刪除</h2>
+            <p>您確定要刪除這個任務嗎？這個動作無法復原。</p>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelDeleteBtn">取消</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn">刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let boardData = {
+            todo: [],
+            inProgress: [],
+            done: []
+        };
+
+        let draggingTaskId = null;
+        let draggingSourceCol = null;
+        let taskToDelete = null; // { id, col }
+        let taskToEdit = null; // { id, col }
+
+        // DOM Elements
+        const addBtn = document.getElementById('addBtn');
+        const addModal = document.getElementById('addModal');
+        const newTaskInput = document.getElementById('newTaskInput');
+        const cancelAddBtn = document.getElementById('cancelAddBtn');
+        const confirmAddBtn = document.getElementById('confirmAddBtn');
+
+        const editModal = document.getElementById('editModal');
+        const editTaskInput = document.getElementById('editTaskInput');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const confirmEditBtn = document.getElementById('confirmEditBtn');
+
+        const deleteModal = document.getElementById('deleteModal');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        const trashZone = document.getElementById('trash-zone');
+        const columns = document.querySelectorAll('.column');
+
+        // Fetch data on load
+        async function loadData() {
+            try {
+                const res = await fetch('/api/data');
+                if (res.ok) {
+                    boardData = await res.json();
+                    renderAll();
+                }
+            } catch (err) {
+                console.error('Failed to load data:', err);
+            }
+        }
+
+        // Column Color Listeners
+        document.querySelectorAll('.col-color').forEach(picker => {
+            picker.addEventListener('change', (e) => {
+                const colId = e.target.dataset.colId;
+                if (!boardData.columnColors) boardData.columnColors = {};
+                boardData.columnColors[colId] = e.target.value;
+                const colEl = document.querySelector(`.column[data-column="${colId}"]`);
+                colEl.style.background = e.target.value + 'b3';
+                const headerSpan = colEl.querySelector('.column-header span');
+                if (headerSpan) {
+                    headerSpan.style.setProperty('color', getContrastColor(e.target.value), 'important');
+                }
+                // Also update container color
+                const headerDiv = colEl.querySelector('.column-header');
+                if (headerDiv) {
+                    headerDiv.style.setProperty('color', getContrastColor(e.target.value), 'important');
+                }
+                saveData();
+            });
+        });
+
+        // Save data to server
+        async function saveData() {
+            try {
+                await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(boardData)
+                });
+            } catch (err) {
+                console.error('Failed to save data:', err);
+            }
+        }
+
+        // Render the board
+        function renderAll() {
+            renderColumn('todo');
+            renderColumn('inProgress');
+            renderColumn('done');
+        }
+
+        function renderColumn(colId) {
+            const listEl = document.getElementById(`${colId}-list`);
+            listEl.innerHTML = '';
+            
+            const colEl = document.querySelector(`.column[data-column="${colId}"]`);
+            const colColor = (boardData.columnColors && boardData.columnColors[colId]) ? boardData.columnColors[colId] : '#1e293b';
+            colEl.style.background = colColor + 'b3';
+            // Set header text color for contrast (both span and container)
+            const headerSpan = colEl.querySelector('.column-header span');
+            if (headerSpan) {
+                headerSpan.style.color = getContrastColor(colColor);
+            }
+            const headerDiv = colEl.querySelector('.column-header');
+            if (headerDiv) {
+                headerDiv.style.color = getContrastColor(colColor);
+            }
+
+            const colPicker = document.getElementById(`color-${colId}`);
+            if (colPicker) colPicker.value = colColor;
+
+            boardData[colId].forEach(task => {
+                const taskEl = document.createElement('div');
+                taskEl.className = 'task';
+                taskEl.draggable = true;
+                taskEl.dataset.id = task.id;
+                taskEl.dataset.col = colId;
+                
+                const taskColor = task.color || '#ffffff';
+                taskEl.style.background = taskColor;
+                taskEl.style.color = getContrastColor(taskColor);
+
+                taskEl.innerHTML = `
+                    <div class="task-header">
+                        <div class="task-text">${task.text}</div>
+                        <div class="task-actions">
+                            <button class="edit-btn" data-task-id="${task.id}" data-col-id="${colId}">✏️</button>
+                            <input type="color" list="presetColors" class="color-picker task-color" value="${taskColor}" data-task-id="${task.id}" data-col-id="${colId}">
+                        </div>
+                    </div>
+                `;
+
+                // Drag Events
+                taskEl.addEventListener('dragstart', handleDragStart);
+                taskEl.addEventListener('dragend', handleDragEnd);
+
+                listEl.appendChild(taskEl);
+            });
+            
+            // Task color listeners
+            listEl.querySelectorAll('.task-color').forEach(picker => {
+                picker.addEventListener('change', (e) => {
+                    const taskId = e.target.dataset.taskId;
+                    const targetColId = e.target.dataset.colId;
+                    const task = boardData[targetColId].find(t => t.id === taskId);
+                    if (task) {
+                        task.color = e.target.value;
+                        const taskEl = e.target.closest('.task');
+                        taskEl.style.background = e.target.value;
+                        taskEl.style.color = getContrastColor(e.target.value);
+                        saveData();
+                    }
+                });
+            });
+
+            // Task edit listeners
+            listEl.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const taskId = e.currentTarget.dataset.taskId;
+                    const targetColId = e.currentTarget.dataset.colId;
+                    const task = boardData[targetColId].find(t => t.id === taskId);
+                    if (task) {
+                        taskToEdit = { id: taskId, col: targetColId };
+                        editTaskInput.value = task.text;
+                        editModal.classList.add('active');
+                        setTimeout(() => editTaskInput.focus(), 100);
+                    }
+                });
+            });
+        }
+
+        // Drag and Drop Handlers
+        function handleDragStart(e) {
+            draggingTaskId = e.target.dataset.id;
+            draggingSourceCol = e.target.dataset.col;
+            e.target.classList.add('dragging');
+            // Required for Firefox
+            e.dataTransfer.setData('text/plain', draggingTaskId);
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggingTaskId = null;
+            draggingSourceCol = null;
+            columns.forEach(c => c.classList.remove('drag-over'));
+            trashZone.classList.remove('drag-over');
+            updateDataFromDOM();
+        }
+
+        // Column Drop Zones
+        columns.forEach(col => {
+            col.addEventListener('dragover', e => {
+                e.preventDefault(); // allow drop
+                col.classList.add('drag-over');
+                const listEl = col.querySelector('.task-list');
+                const afterElement = getDragAfterElement(listEl, e.clientY);
+                const draggable = document.querySelector('.dragging');
+                if (draggable) {
+                    if (afterElement == null) {
+                        listEl.appendChild(draggable);
+                    } else {
+                        listEl.insertBefore(draggable, afterElement);
+                    }
+                }
+            });
+
+            col.addEventListener('dragleave', e => {
+                col.classList.remove('drag-over');
+            });
+
+            col.addEventListener('drop', e => {
+                e.preventDefault();
+                col.classList.remove('drag-over');
+            });
+        });
+
+        // Trash Drop Zone
+        trashZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            trashZone.classList.add('drag-over');
+        });
+
+        trashZone.addEventListener('dragleave', e => {
+            trashZone.classList.remove('drag-over');
+        });
+
+        trashZone.addEventListener('drop', e => {
+            e.preventDefault();
+            trashZone.classList.remove('drag-over');
+            if (draggingTaskId) {
+                // Prompt for deletion
+                taskToDelete = { id: draggingTaskId };
+                deleteModal.classList.add('active');
+            }
+        });
+
+        // Logic Functions
+        function getContrastColor(hexColor) {
+            if (!hexColor || hexColor.length !== 7) return '#0f172a';
+            const r = parseInt(hexColor.substr(1, 2), 16);
+            const g = parseInt(hexColor.substr(3, 2), 16);
+            const b = parseInt(hexColor.substr(5, 2), 16);
+            const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            return (yiq >= 128) ? '#0f172a' : '#ffffff';
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.task:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function updateDataFromDOM() {
+            let hasChanges = false;
+            columns.forEach(col => {
+                const colId = col.dataset.column;
+                const tasksInCol = [...col.querySelectorAll('.task')];
+                const newArray = [];
+                tasksInCol.forEach(taskEl => {
+                    const taskId = taskEl.dataset.id;
+                    let foundTask = null;
+                    ['todo', 'inProgress', 'done'].forEach(c => {
+                        const t = boardData[c].find(x => x.id === taskId);
+                        if (t) foundTask = t;
+                    });
+                    if (foundTask) {
+                        if (taskEl.dataset.col !== colId) {
+                            taskEl.dataset.col = colId;
+                            hasChanges = true;
+                        }
+                        newArray.push(foundTask);
+                    }
+                });
+                if (newArray.length !== boardData[colId].length || newArray.some((t, i) => t.id !== boardData[colId][i].id)) {
+                    hasChanges = true;
+                }
+                boardData[colId] = newArray;
+            });
+            if (hasChanges) saveData();
+        }
+
+        function generateId() {
+            return 'task-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Add Modal Handlers
+        addBtn.addEventListener('click', () => {
+            newTaskInput.value = '';
+            addModal.classList.add('active');
+            setTimeout(() => newTaskInput.focus(), 100);
+        });
+
+        cancelAddBtn.addEventListener('click', () => {
+            addModal.classList.remove('active');
+        });
+
+        confirmAddBtn.addEventListener('click', () => {
+            const text = newTaskInput.value.trim();
+            if (text) {
+                boardData.todo.push({ id: generateId(), text, color: '#ffffff' });
+                renderColumn('todo');
+                saveData();
+                addModal.classList.remove('active');
+            }
+        });
+
+        newTaskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') confirmAddBtn.click();
+        });
+
+        // Edit Modal Handlers
+        cancelEditBtn.addEventListener('click', () => {
+            editModal.classList.remove('active');
+            taskToEdit = null;
+        });
+
+        confirmEditBtn.addEventListener('click', () => {
+            if (taskToEdit) {
+                const text = editTaskInput.value.trim();
+                if (text) {
+                    const task = boardData[taskToEdit.col].find(t => t.id === taskToEdit.id);
+                    if (task) {
+                        task.text = text;
+                        renderColumn(taskToEdit.col);
+                        saveData();
+                    }
+                    editModal.classList.remove('active');
+                    taskToEdit = null;
+                }
+            }
+        });
+
+        editTaskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') confirmEditBtn.click();
+        });
+
+        // Delete Modal Handlers
+        cancelDeleteBtn.addEventListener('click', () => {
+            deleteModal.classList.remove('active');
+            taskToDelete = null;
+            renderAll(); // Revert visual drag if it was dropped on trash but cancelled
+        });
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (taskToDelete) {
+                const { id } = taskToDelete;
+                ['todo', 'inProgress', 'done'].forEach(col => {
+                    boardData[col] = boardData[col].filter(t => t.id !== id);
+                });
+                renderAll();
+                saveData();
+                deleteModal.classList.remove('active');
+                taskToDelete = null;
+            }
+        });
+
+        // Init
+        loadData();
+
+    </script>
+</body>
+</html>
