@@ -37,7 +37,7 @@
 
         header {
             display: flex;
-            justify-content: flex-start;
+            justify-content: space-between;
             align-items: center;
             gap: 0.75rem;
             margin-bottom: 2rem;
@@ -62,7 +62,34 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        }
+        .right-header {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .left-header {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .btn-green {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.1);
+        }
+        .btn-green:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
         }
 
         .btn:hover {
@@ -331,13 +358,17 @@
     </datalist>
 
     <header>
-    <h1>待辦事項</h1>
-    <button class="btn" id="addBtn"><span class="plus-icon">➕</span> 新增任務</button>
-    <button class="btn" id="exportBtn">匯出</button>
-    <input type="file" id="importFile" accept=".json" style="display:none;" />
-    <button class="btn" id="importBtn">匯入</button>
-    <div class="trash-zone" id="trash-zone"><span class="trash-icon">🗑️</span> 垃&nbsp圾&nbsp桶</div>
-</header>
+        <div class="left-header">
+            <h1>待辦事項</h1>
+            <button class="btn" id="addBtn"><span class="plus-icon">➕</span> 新增任務</button>
+            <div class="trash-zone" id="trash-zone"><span class="trash-icon">🗑️</span> 垃&nbsp圾&nbsp桶</div>
+        </div>
+        <div class="right-header">
+            <button class="btn btn-green" id="exportBtn"><span class="export-icon">📤</span> 匯出</button>
+            <button class="btn btn-green" id="importBtn"><span class="import-icon">📥</span> 匯入</button>
+            <input type="file" id="importFile" accept=".json" style="display:none;" />            
+        </div>
+    </header>
 
     <div class="board">
         <div class="column" data-column="todo">
