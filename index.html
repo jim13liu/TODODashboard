@@ -879,8 +879,12 @@
             const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
+            const now = new Date();
+            const datePart = now.toISOString().substring(0, 10).replace(/-/g, ''); // YYYYMMDD
+            const timePart = now.toISOString().substring(11, 19).replace(/:/g, ''); // HHMMSS
+            const timestampStr = `${datePart}_${timePart}`;
             a.href = url;
-            a.download = 'todo-data.json';
+            a.download = `todo-data_${timestampStr}.json`;
             a.click();
             URL.revokeObjectURL(url);
         });
